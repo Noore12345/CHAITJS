@@ -1,0 +1,187 @@
+{% load i18n %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <style>
+        
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            position: relative;
+        }
+        .app-module {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            padding: 10px;
+        }
+        h1 {
+            text-align: center;
+            color: #007bff;
+        }
+        canvas {
+            margin: 20px 0;
+        }
+        
+        .chat-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 300px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            display: none; /* Initially hidden */
+        }
+        .chat-header {
+            background: #007bff;
+            color: white;
+            padding: 10px;
+            border-radius: 8px 8px 0 0;
+            cursor: pointer;
+        }
+        .chat-messages {
+            height: 200px;
+            overflow-y: auto;
+            padding: 10px;
+        }
+        .chat-input {
+            padding: 10px;
+            border: none;
+            width: 100%;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+
+
+
+{% if app_list %}
+  {% for app in app_list %}
+    <div class="app-module app-{{ app.app_label }}{% if app.app_url in request.path|urlencode %} current-app{% endif %}">
+      <h2>{{ app.name }}</h2>
+      <table>
+        <tbody>
+          {% for model in app.models %}
+            <tr class="model-row model-{{ model.object_name|lower }}{% if model.admin_url in request.path|urlencode %} current-model{% endif %}">
+              {% if model.admin_url %}
+                <th scope="row">
+                  <a href="{{ model.admin_url }}"{% if model.admin_url in request.path|urlencode %} aria-current="page"{% endif %}>{{ model.name }}</a>
+                </th>
+              {% else %}
+                <th scope="row">{{ model.name }}</th>
+              {% endif %}
+
+              {% if model.add_url %}
+                <td>
+                  <a href="{{ model.add_url }}" class="add-link">Add {{ model.name }}</a>
+                </td>
+              {% else %}
+                <td></td>
+              {% endif %}
+
+              {% if model.admin_url and show_changelinks %}
+                <td>
+                  <a href="{{ model.admin_url }}?action=change" class="add-link">Edit</a>
+                </td>
+              {% elif show_changelinks %}
+                <td></td>
+              {% endif %}
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% endfor %}
+{% else %}
+  <p>{% translate 'You don’t have permission to view or edit anything.' %}</p>
+{% endif %}
+
+
+<canvas id="myBarChart" width="400" height="200"></canvas>
+
+
+<div class="chat-container" id="chatContainer">
+    <div class="chat-header" id="chatHeader">Chat Support</div>
+    <div class="chat-messages" id="chatMessages"></div>
+    <input type="text" id="chatInput" class="chat-input" placeholder="Type a message...">
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  
+    function getRandomData(num) {
+        const data = [];
+        for (let i = 0; i < num; i++) {
+            data.push(Math.floor(Math.random() * 100));
+        }
+        return data;
+    }
+
+    
+    const barLabels = ['Company', 'Interviewer', 'Interview', 'InterviewQuestion', 'InterviewPhase', 'OneTimeAccessToken'];
+    const barData = getRandomData(barLabels.length);
+    const barCtx = document.getElementById('myBarChart').getContext('2d');
+    const myBarChart = new Chart(barCtx, {
+        type: 'bar',
+        data: {
+            labels: barLabels,
+            datasets: [{
+                label: '# of Votes',
+                data: barData,
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            },
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'top',
+                },
+                title: {
+                    display: true,
+                    text: 'DATA VISUALIZATION'
+                }
+            }
+        }
+    });
+
+    
+    document.getElementById('chatHeader').onclick = function() {
+        const chatContainer = document.getElementById('chatContainer');
+        chatContainer.style.display = chatContainer.style.display === 'none' || chatContainer.style.display === '' ? 'block' : 'none';
+    };
+
+  
+    const chatInput = document.getElementById('chatInput');
+    chatInput.addEventListener('keypress', function(event) {
+        if (event.key === 'Enter') {
+            const message = chatInput.value;
+            if (message.trim()) {
+                
+                const messageElement = document.createElement('div');
+                messageElement.textContent = message;
+                document.getElementById('chatMessages').appendChild(messageElement);
+                chatInput.value = ''; 
+            }
+        }
+    });
+</script>
+
+</body>
+</html>
